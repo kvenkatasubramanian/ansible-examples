@@ -1,13 +1,17 @@
 - name: Check cluster status via API
   hosts: localhost
   gather_facts: no
+  vars:
+    api_url: ""
+    api_user: ""
+    api_password: ""
   tasks:
     - name: Call cluster check API
       ansible.builtin.uri:
-        url: "https://35.222.217.81:9443/v1/cluster/check"
+        url: "{{ api_url }}"
         method: GET
-        user: "admin@rl.org"
-        password: "redislabs"
+        user: "{{ api_user }}"
+        password: "{{ api_password }}"
         force_basic_auth: yes
         validate_certs: no     
         return_content: yes
