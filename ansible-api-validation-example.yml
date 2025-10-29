@@ -6,7 +6,7 @@
     api_user: ""
     api_password: ""
   tasks:
-    - name: Call cluster check API
+    - name: Call REST API
       ansible.builtin.uri:
         url: "{{ api_url }}"
         method: GET
