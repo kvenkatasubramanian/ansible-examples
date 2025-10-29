@@ -1,0 +1,42 @@
+- name: Check cluster status via API
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Call cluster check API
+      ansible.builtin.uri:
+        url: "https://35.222.217.81:9443/v1/cluster/check"
+        method: GET
+        user: "admin@rl.org"
+        password: "redislabs"
+        force_basic_auth: yes
+        validate_certs: no     
+        return_content: yes
+      register: cluster_response
+
+    - name: Parse API JSON
+      set_fact:
+        cluster_data: "{{ cluster_response.json }}"
+
+    - name: Check if cluster_test_result is true
+      debug:
+        msg: "Cluster test result passed."
+      when: cluster_data.cluster_test_result | bool
+
+    - name: Check node results and fail if any node has result=false
+      vars:
+        failed_nodes: "{{ cluster_data.nodes | selectattr('result', 'equalto', false) | list }}"
+      block:
+        - name: Show failed nodes with error details
+          debug:
+            msg: >
+              Node UID {{ item.node_uid }} failed:
+              {{ item.error }}
+          loop: "{{ failed_nodes }}"
+          when: failed_nodes | length > 0
+
+        - name: Fail play if any node failed
+          ansible.builtin.fail:
+            msg: >
+              Some nodes failed cluster check:
+              {{ failed_nodes | map(attribute='node_uid') | list }}
+          when: failed_nodes | length > 0
